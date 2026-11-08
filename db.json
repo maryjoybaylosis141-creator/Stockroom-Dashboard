@@ -1,0 +1,61 @@
+{
+  "items": {
+    "nextId": 8,
+    "docs": {
+      "1": {
+        "name": "Oak writing desk",
+        "category": "Furniture",
+        "quantity": 12,
+        "price": 289,
+        "status": "active",
+        "updatedAt": "2026-11-08T03:23:14.335Z",
+        "id": 1
+      },
+      "2": {
+        "name": "Ergonomic chair",
+        "category": "Furniture",
+        "quantity": 4,
+        "price": 349.5,
+        "status": "active",
+        "updatedAt": "2026-11-08T03:23:14.498Z",
+        "id": 2
+      },
+      "3": {
+        "name": "USB-C dock",
+        "category": "Electronics",
+        "quantity": 31,
+        "price": 89.99,
+        "status": "active",
+        "updatedAt": "2026-11-08T03:23:14.596Z",
+        "id": 3
+      },
+      "5": {
+        "name": "Dot-grid notebook",
+        "category": "Stationery",
+        "quantity": 140,
+        "price": 6.5,
+        "status": "active",
+        "updatedAt": "2026-11-08T03:23:14.659Z",
+        "id": 5
+      },
+      "6": {
+        "name": "Fountain pen",
+        "category": "Stationery",
+        "quantity": 0,
+        "price": 24,
+        "status": "discontinued",
+        "updatedAt": "2026-11-08T03:23:14.663Z",
+        "id": 6
+      },
+      "7": {
+        "name": "cellphone",
+        "category": "Electronics",
+        "quantity": 5,
+        "price": 10000,
+        "status": "active",
+        "updatedAt": "2026-11-08T03:25:35.176Z",
+        "id": 7
+      }
+    }
+  }
+}

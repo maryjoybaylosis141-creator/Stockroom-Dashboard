@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stockroom</title>
+<style>
+  :root {
+    --paper: #f2f4f6;
+    --panel: #ffffff;
+    --ink: #17212b;
+    --muted: #5d6b79;
+    --line: #dde2e8;
+    --accent: #0f6b6f;
+    --accent-ink: #ffffff;
+    --accent-soft: #dcefef;
+    --warn: #9a5b00;
+    --warn-soft: #fbeccf;
+    --danger: #b3261e;
+    --danger-soft: #fbe3e1;
+    --radius: 8px;
+    --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #11171d;
+      --panel: #1a222b;
+      --ink: #e7edf3;
+      --muted: #9aa8b6;
+      --line: #2b3641;
+      --accent: #4fc0c4;
+      --accent-ink: #08272a;
+      --accent-soft: #17383b;
+      --warn: #f0b95c;
+      --warn-soft: #3a2c10;
+      --danger: #ff8f86;
+      --danger-soft: #3d1c19;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Sidebar */
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 24px 20px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .brand-sub { color: var(--muted); font-size: .875rem; margin: 0 0 28px; }
+  .side-nav {
+    display: grid; gap: 8px; margin-top: 18px;
+  }
+  .nav-button {
+    width: 100%; border: 1px solid var(--line); background: transparent; color: var(--ink);
+    padding: 8px 12px; border-radius: 6px; text-align: left; font-weight: 500; cursor: pointer;
+  }
+  .nav-button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); }
+  .nav-button.danger { color: var(--danger); }
+  .nav-button.danger.active { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-soft); }
+
+  /* Main */
+  main { padding: 28px 32px 48px; max-width: 1200px; width: 100%; }
+  header.page { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  h1 { font-size: 1.6rem; margin: 0; letter-spacing: -0.02em; }
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+
+  .btn {
+    border: 1px solid var(--line); background: var(--panel);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 500;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.danger { color: var(--danger); }
+  .btn.small { padding: 4px 10px; font-size: .875rem; }
+
+  /* Summary */
+  .summary {
+    display: grid; grid-template-columns: 1.4fr repeat(3, 1fr);
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 20px;
+  }
+  .summary > div { padding: 18px 20px; border-right: 1px solid var(--line); }
+  .summary > div:last-child { border-right: 0; }
+  .summary .label { color: var(--muted); font-size: .875rem; }
+  .summary .value { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .summary .lead .value { font-size: 2.2rem; color: var(--accent); }
+  .summary .warn .value { color: var(--warn); }
+  .summary .bad .value { color: var(--danger); }
+  .stock-btn { margin-top: 10px; }
+  .stock-btn.danger { color: var(--danger); }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; }
+
+  /* Category bars */
+  .bars { display: grid; gap: 10px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 100px; align-items: center; gap: 12px; font-size: .9rem; }
+  .bar-track { background: var(--paper); border-radius: 4px; height: 12px; overflow: hidden; }
+  .bar-fill { background: var(--accent); height: 100%; border-radius: 4px; transition: width .4s ease; }
+  .bar-row .amt { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+  /* Toolbar + table */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar input, .toolbar select, dialog input, dialog select {
+    border: 1px solid var(--line); background: var(--paper); border-radius: 6px; padding: 8px 10px;
+  }
+  .toolbar input[type=search] { flex: 1 1 220px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: .875rem; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+  td.actions { text-align: right; }
+  td.actions .btn + .btn { margin-left: 6px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+  .pill.ok { background: var(--accent-soft); color: var(--accent); }
+  .pill.low { background: var(--warn-soft); color: var(--warn); }
+  .pill.out, .pill.disc { background: var(--danger-soft); color: var(--danger); }
+  .empty { text-align: center; color: var(--muted); padding: 32px 0; }
+
+  /* Dialog */
+  dialog { border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--panel); color: var(--ink); width: min(440px, 92vw); }
+  dialog::backdrop { background: rgba(10, 16, 22, .5); }
+  dialog form { padding: 22px; display: grid; gap: 14px; }
+  dialog h2 { margin: 0; }
+  dialog label { display: grid; gap: 4px; font-weight: 500; font-size: .9rem; }
+  dialog .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  dialog .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  .form-error { color: var(--danger); font-size: .9rem; min-height: 1.2em; margin: 0; }
+  .confirm-text { margin: 0; color: var(--muted); }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 6px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+
+  @media (max-width: 820px) {
+    body { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 16px 20px; }
+    .brand-sub { display: none; }
+    aside .brand { margin: 0; }
+    aside nav { display: none; }
+    main { padding: 20px 16px 40px; }
+    .summary { grid-template-columns: 1fr 1fr; }
+    .summary > div { border-bottom: 1px solid var(--line); }
+    .bar-row { grid-template-columns: 80px 1fr 80px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar-fill, #toast { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <aside>
+    <p class="brand">Stockroom</p>
+    <p class="brand-sub">Inventory dashboard</p>
+    <nav class="side-nav" aria-label="Inventory filters">
+      <button type="button" class="nav-button active" data-stock="" aria-current="page">Items</button>
+      <button type="button" class="nav-button" data-stock="low">Low stock</button>
+      <button type="button" class="nav-button danger" data-stock="out">Out of stock</button>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="page">
+      <h1>Inventory</h1>
+      <button class="btn primary" id="addBtn">Add item</button>
+    </header>
+
+    <section class="summary" aria-label="Summary">
+      <div class="lead"><div class="label">Stock value</div><div class="value" id="sValue">–</div></div>
+      <div><div class="label">Items</div><div class="value" id="sItems">–</div></div>
+      <div class="warn"><div class="label">Low stock (5 or fewer)</div><div class="value" id="sLow">–</div></div>
+      <div class="bad"><div class="label">Out of stock</div><div class="value" id="sOut">–</div></div>
+    </section>
+
+    <section class="panel">
+      <h2>Stock value by category</h2>
+      <div class="bars" id="bars"></div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <input type="search" id="search" placeholder="Search by name or category" aria-label="Search items">
+        <select id="filterCategory" aria-label="Filter by category"><option value="">All categories</option></select>
+        <select id="filterStatus" aria-label="Filter by status">
+          <option value="">Any status</option>
+          <option value="active">Active</option>
+          <option value="discontinued">Discontinued</option>
+        </select>
+        <button type="button" id="clearStockFilterBtn" class="btn small" hidden>Show all items</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Category</th><th class="num">Quantity</th><th class="num">Price</th>
+              <th>Stock</th><th>Updated</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add / edit dialog -->
+  <dialog id="formDialog">
+    <form method="dialog" id="itemForm" novalidate>
+      <h2 id="formTitle">Add item</h2>
+      <label>Name <input name="name" required maxlength="80" autocomplete="off"></label>
+      <label>Category <input name="category" required maxlength="40" list="categoryList" autocomplete="off"></label>
+      <datalist id="categoryList"></datalist>
+      <div class="row">
+        <label>Quantity <input name="quantity" type="number" min="0" step="1" required value="0"></label>
+        <label>Price <input name="price" type="number" min="0" step="0.01" required value="0"></label>
+      </div>
+      <label>Status
+        <select name="status"><option value="active">Active</option><option value="discontinued">Discontinued</option></select>
+      </label>
+      <p class="form-error" id="formError" role="alert"></p>
+      <div class="foot">
+        <button type="button" class="btn" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn primary" id="saveBtn">Save item</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Delete confirmation -->
+  <dialog id="deleteDialog">
+    <form method="dialog">
+      <h2>Delete item?</h2>
+      <p class="confirm-text" id="deleteText"></p>
+      <div class="foot">
+        <button type="button" class="btn" id="deleteCancel">Keep item</button>
+        <button type="button" class="btn danger" id="deleteConfirm">Delete item</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const money = (n) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n);
+const state = { editingId: null, deletingId: null, items: [], stockFilter: '' };
+
+function formatStockFilterLabel() {
+  if (state.stockFilter === 'low') return 'Low stock items';
+  if (state.stockFilter === 'out') return 'Out of stock items';
+  return 'All items';
+}
+
+function matchesStockFilter(item) {
+  if (!state.stockFilter) return true;
+  if (state.stockFilter === 'low') return item.status !== 'discontinued' && item.quantity > 0 && item.quantity <= 5;
+  if (state.stockFilter === 'out') return item.quantity === 0;
+  return true;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+  return data;
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function el(tag, props = {}, ...children) {
+  const node = document.createElement(tag);
+  Object.assign(node, props);
+  children.forEach((c) => node.append(c));
+  return node;
+}
+
+function stockPill(item) {
+  if (item.status === 'discontinued') return el('span', { className: 'pill disc', textContent: 'Discontinued' });
+  if (item.quantity === 0) return el('span', { className: 'pill out', textContent: 'Out of stock' });
+  if (item.quantity <= 5) return el('span', { className: 'pill low', textContent: 'Low' });
+  return el('span', { className: 'pill ok', textContent: 'In stock' });
+}
+
+/* ---------- Read ---------- */
+async function loadStats() {
+  const s = await api('/api/stats');
+  $('sValue').textContent = money(s.stockValue);
+  $('sItems').textContent = s.totalItems;
+  $('sLow').textContent = s.lowStock;
+  $('sOut').textContent = s.outOfStock;
+
+  const max = Math.max(...s.byCategory.map((c) => c.value), 1);
+  const bars = $('bars');
+  bars.replaceChildren();
+  if (!s.byCategory.length) bars.append(el('div', { className: 'empty', textContent: 'Add an item to see value by category.' }));
+  s.byCategory.forEach((c) => {
+    const fill = el('div', { className: 'bar-fill' });
+    fill.style.width = (c.value / max) * 100 + '%';
+    bars.append(el('div', { className: 'bar-row' },
+      el('span', { textContent: c.category }),
+      el('div', { className: 'bar-track' }, fill),
+      el('span', { className: 'amt', textContent: money(c.value) })));
+  });
+
+  // Keep category filter + form suggestions in sync
+  const current = $('filterCategory').value;
+  $('filterCategory').replaceChildren(el('option', { value: '', textContent: 'All categories' }),
+    ...s.categories.map((c) => el('option', { value: c, textContent: c })));
+  $('filterCategory').value = s.categories.includes(current) ? current : '';
+  $('categoryList').replaceChildren(...s.categories.map((c) => el('option', { value: c })));
+}
+
+async function loadItems() {
+  const params = new URLSearchParams();
+  if ($('search').value.trim()) params.set('q', $('search').value.trim());
+  if ($('filterCategory').value) params.set('category', $('filterCategory').value);
+  if ($('filterStatus').value) params.set('status', $('filterStatus').value);
+  state.items = await api('/api/items?' + params);
+
+  const filtered = state.items.filter(matchesStockFilter);
+  const body = $('rows');
+  body.replaceChildren();
+  if (!filtered.length) {
+    body.append(el('tr', {}, el('td', { colSpan: 7, className: 'empty', textContent: state.stockFilter ? `No ${formatStockFilterLabel().toLowerCase()} match the current filters.` : 'No items match. Add one or clear the filters.' })));
+    return;
+  }
+  filtered.forEach((item) => {
+    const edit = el('button', { className: 'btn small', textContent: 'Edit' });
+    const del = el('button', { className: 'btn small danger', textContent: 'Delete' });
+    edit.onclick = () => openForm(item);
+    del.onclick = () => openDelete(item);
+    body.append(el('tr', {},
+      el('td', { textContent: item.name }),
+      el('td', { textContent: item.category }),
+      el('td', { className: 'num', textContent: item.quantity }),
+      el('td', { className: 'num', textContent: money(item.price) }),
+      el('td', {}, stockPill(item)),
+      el('td', { textContent: new Date(item.updatedAt).toLocaleDateString() }),
+      el('td', { className: 'actions' }, edit, del)));
+  });
+
+  const clearBtn = $('clearStockFilterBtn');
+  clearBtn.hidden = !state.stockFilter;
+  clearBtn.textContent = state.stockFilter ? `Show all items` : 'Show all items';
+}
+
+const refresh = () => Promise.all([loadStats(), loadItems()]);
+
+/* ---------- Create + Update ---------- */
+function openForm(item = null) {
+  state.editingId = item ? item.id : null;
+  $('formTitle').textContent = item ? 'Edit item' : 'Add item';
+  const f = $('itemForm');
+  f.name.value = item ? item.name : '';
+  f.category.value = item ? item.category : '';
+  f.quantity.value = item ? item.quantity : 0;
+  f.price.value = item ? item.price : 0;
+  f.status.value = item ? item.status : 'active';
+  $('formError').textContent = '';
+  $('formDialog').showModal();
+  f.name.focus();
+}
+
+$('itemForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const body = { name: f.name.value, category: f.category.value, quantity: f.quantity.value, price: f.price.value, status: f.status.value };
+  try {
+    if (state.editingId) {
+      await api('/api/items/' + state.editingId, { method: 'PUT', body });
+      toast('Item updated');
+    } else {
+      await api('/api/items', { method: 'POST', body });
+      toast('Item added');
+    }
+    $('formDialog').close();
+    refresh();
+  } catch (err) {
+    $('formError').textContent = err.message;
+  }
+});
+
+/* ---------- Delete ---------- */
+function openDelete(item) {
+  state.deletingId = item.id;
+  $('deleteText').textContent = `"${item.name}" will be removed from the inventory. This can't be undone.`;
+  $('deleteDialog').showModal();
+}
+
+$('deleteConfirm').onclick = async () => {
+  try {
+    await api('/api/items/' + state.deletingId, { method: 'DELETE' });
+    toast('Item deleted');
+  } catch (err) {
+    toast(err.message);
+  }
+  $('deleteDialog').close();
+  refresh();
+};
+
+/* ---------- Wiring ---------- */
+$('addBtn').onclick = () => openForm();
+$('cancelBtn').onclick = () => $('formDialog').close();
+$('deleteCancel').onclick = () => $('deleteDialog').close();
+function syncStockButtons() {
+  document.querySelectorAll('[data-stock]').forEach((button) => {
+    const isSelected = button.dataset.stock === state.stockFilter;
+    button.classList.toggle('active', isSelected);
+    button.setAttribute('aria-current', isSelected ? 'page' : 'false');
+  });
+}
+
+$('clearStockFilterBtn').onclick = () => {
+  state.stockFilter = '';
+  syncStockButtons();
+  loadItems();
+};
+
+document.querySelectorAll('[data-stock]').forEach((button) => {
+  button.addEventListener('click', () => {
+    state.stockFilter = button.dataset.stock;
+    syncStockButtons();
+    loadItems();
+  });
+});
+
+let searchTimer;
+$('search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadItems, 200); });
+$('filterCategory').addEventListener('change', loadItems);
+$('filterStatus').addEventListener('change', loadItems);
+
+syncStockButtons();
+refresh().catch((err) => toast(err.message));
+</script>
+</body>
+</html>
